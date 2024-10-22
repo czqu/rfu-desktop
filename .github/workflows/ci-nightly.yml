@@ -1,0 +1,43 @@
+name: nightly build
+
+on:
+  push:
+    branches: develop
+  repository_dispatch:  
+    types: [rfu-desktop-nightly]
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: 
+          repository: czqu/rfu_desktop
+          token: ${{ secrets.GH_TOKEN }}
+          path: code
+          ref: develop
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          cache: true
+          channel: stable
+          flutter-version: 3.24.1
+      - run: mv code/* .
+      - run: flutter build windows --release
+      - name: archive
+        run: |
+          $sourcePath = Join-Path -Path (Get-Location) -ChildPath 'build/windows/x64/runner/Release'
+          $zipFileName = 'rfu_desktop_windows_x64.zip'
+          $destinationPath = Join-Path -Path (Get-Location) -ChildPath $zipFileName
+          Compress-Archive -Path $sourcePath\* -DestinationPath $destinationPath -Force
+        shell: pwsh
+
+      - name: Upload release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "rfu_desktop_*.zip"
+          prerelease: true
+          tag_name: nightly
+          token: ${{ secrets.GH_TOKEN }}
+          body_path: release_note.md
