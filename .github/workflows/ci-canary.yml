@@ -1,10 +1,10 @@
-name: nightly build
+name: build for canary
 
 on:
   push:
-    branches: develop
+ #   branches: develop
   repository_dispatch:  
-    types: [rfu-desktop-nightly]
+    types: [rfu-desktop-canary]
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -22,7 +22,7 @@ jobs:
         with:
           cache: true
           channel: stable
-          flutter-version: 3.24.1
+          flutter-version: 3.24.3
       - run: mv code/* .
       - run: flutter build windows --release
       - name: archive
@@ -38,6 +38,13 @@ jobs:
         with:
           files: "rfu_desktop_*.zip"
           prerelease: true
-          tag_name: nightly
+          tag_name: canary
           token: ${{ secrets.GH_TOKEN }}
           body_path: release_note.md
+      - name: Dispatch workflow
+        run: |
+          curl.exe -v -X POST `
+            -H "Authorization: token ${{ secrets.GH_TOKEN }}" `
+            -H "Accept: application/vnd.github.v3+json" `
+            https://api.github.com/repos/czqu/RemoteFingerUnlock/dispatches `
+            -d '{"event_type":"canary"}'
