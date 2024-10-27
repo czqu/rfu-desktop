@@ -2,7 +2,7 @@ name: build for canary
 
 on:
   push:
- #   branches: develop
+    branches: main
   repository_dispatch:  
     types: [rfu-desktop-canary]
 jobs:
